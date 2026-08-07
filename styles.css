@@ -1,0 +1,361 @@
+/* Memos Plugin Styles — Obsidian-native theming & Apple Design Polish */
+
+/* ── Design tokens (fully deferred to Obsidian variables) ── */
+.memos-container {
+    --bg:        var(--background-secondary);
+    --surface:   var(--background-primary);
+    --border:    var(--background-modifier-border);
+    --border-md: var(--background-modifier-border-focus);
+    --ink:       var(--text-normal);
+    --ink-2:     var(--text-muted);
+    --ink-3:     var(--text-faint);
+    --accent:    var(--interactive-accent);
+    --accent-dk: var(--interactive-accent-hover);
+    --tag-bg:    var(--tag-background);
+    --tag-ink:   var(--tag-color);
+    --sans:      var(--font-interface);
+    --mono:      var(--font-monospace);
+    --r-sm:      6px;
+    --r-md:      8px;
+    --r-lg:      10px;
+    --shadow-sm: var(--shadow-s);
+    --shadow-md: var(--shadow-l);
+}
+
+/* ── App shell ── */
+.memos-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    /* Responsive padding: generous on desktop, compact on mobile */
+    padding: 16px max(16px, min(40px, 5vw));
+    overflow-y: auto;
+    background-color: var(--bg);
+}
+
+/* ── Compose area ── */
+.memos-container .compose {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 14px 18px;
+    margin-bottom: 14px;
+    flex-shrink: 0;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.memos-container .compose:focus-within {
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-md);
+}
+
+.memos-container .compose textarea {
+    width: 100%;
+    border: none;
+    outline: none;
+    resize: none;
+    font-family: var(--sans);
+    font-size: var(--font-text-size, 15px);
+    line-height: 1.65;
+    color: var(--ink);
+    background: transparent;
+    min-height: 72px;
+    display: block;
+    -webkit-appearance: none;
+    appearance: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.memos-container .compose textarea::placeholder {
+    color: var(--ink-3);
+}
+
+.memos-container .compose textarea:focus,
+.memos-container .compose textarea:active,
+.memos-container .compose textarea:focus-visible {
+    box-shadow: none;
+    outline: none;
+    border: none;
+}
+
+/* ── #7: Dynamic Compose footer (collapsible) ── */
+.memos-container .compose-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0px solid transparent;
+    transition: max-height 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.15s ease,
+                margin-top 0.2s ease,
+                padding-top 0.2s ease;
+}
+
+.memos-container .compose.has-content .compose-footer {
+    max-height: 50px;
+    opacity: 1;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+}
+
+.memos-container .btn-save {
+    background: var(--accent);
+    color: var(--text-on-accent, #fff);
+    border: none;
+    border-radius: var(--r-sm);
+    padding: 6px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--sans);
+    transition: opacity 0.12s;
+}
+.memos-container .btn-save:hover {
+    opacity: 0.85;
+}
+
+/* ── #1: Response (pointer-down feedback) ── */
+.memos-container .btn-save:active {
+    transform: scale(0.95);
+    transition: transform 80ms ease-out;
+}
+
+/* ── Filter bar ── */
+.memos-container .filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 0 12px 0;
+    flex-shrink: 0;
+}
+
+.memos-container .search-wrap {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.memos-container .search-wrap svg {
+    position: absolute;
+    left: 9px;
+    color: var(--ink-3);
+    pointer-events: none;
+}
+
+.memos-container .search-input {
+    box-sizing: border-box;
+    height: 30px;
+    width: 100%;
+    padding: 0 10px 0 30px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    font-size: 13px;
+    font-family: var(--sans);
+    background: var(--surface);
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.12s;
+}
+.memos-container .search-input:focus {
+    border-color: var(--accent);
+}
+.memos-container .search-input::placeholder {
+    color: var(--ink-3);
+}
+
+.memos-container .tag-select {
+    box-sizing: border-box;
+    height: 30px;
+    padding: 0 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    font-size: 12px;
+    font-family: var(--sans);
+    background: var(--surface);
+    color: var(--ink-2);
+    outline: none;
+    cursor: pointer;
+    max-width: 110px;
+}
+
+/* ── Note count ── */
+.memos-container .note-count {
+    padding: 0 0 8px 0;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+    color: var(--ink-3);
+}
+
+/* ── Note list ── */
+.memos-container .note-list {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* ── #4: Entrance Animation ── */
+@keyframes cardEntrance {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.99);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* ── Note card ── */
+.memos-container .note-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 14px 16px;
+    position: relative;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.12s, border-color 0.12s, transform 80ms ease-out;
+    user-select: text;
+    cursor: pointer;
+    /* #4: Smooth staggered spring-like entrance */
+    animation: cardEntrance 0.28s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+.memos-container .note-card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-md);
+}
+
+/* ── #1: Response on card click / press ── */
+.memos-container .note-card:active {
+    transform: scale(0.985);
+    transition: transform 80ms ease-out;
+}
+
+.memos-container .note-card.pinned {
+    border-color: var(--accent);
+    border-width: 1.5px;
+}
+
+/* ── Card content (Markdown) ── */
+.memos-container .card-content {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--ink);
+    word-break: break-word;
+    outline: none;
+}
+
+.memos-container .card-content p {
+    margin-block-start: 0.4em;
+    margin-block-end: 0.4em;
+}
+.memos-container .card-content p:first-child { margin-block-start: 0; }
+.memos-container .card-content p:last-child  { margin-block-end: 0; }
+
+.memos-container .card-content h1 {
+    font-size: 1.15em;
+    font-weight: 600;
+    margin-top: 0.4em;
+    margin-bottom: 0.2em;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+}
+.memos-container .card-content h2 {
+    font-size: 1.08em;
+    font-weight: 600;
+    margin-top: 0.4em;
+    margin-bottom: 0.2em;
+    line-height: 1.35;
+}
+.memos-container .card-content h3 {
+    font-size: 1.0em;
+    font-weight: 600;
+    margin-top: 0.3em;
+    margin-bottom: 0.1em;
+    line-height: 1.35;
+}
+
+/* Code block styling inside card content */
+.memos-container .card-content code {
+    font-family: var(--mono);
+    font-size: 0.88em;
+    padding: 2px 5px;
+    border-radius: 4px;
+    background-color: var(--code-background, var(--bg));
+    color: var(--code-normal, var(--ink));
+}
+
+.memos-container .card-content pre {
+    background-color: var(--code-background, var(--bg));
+    padding: 8px 12px;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 0.5em 0;
+}
+
+.memos-container .card-content pre code {
+    padding: 0;
+    background: transparent;
+}
+
+/* ── Card footer ── */
+.memos-container .card-footer {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+.memos-container .card-date {
+    font-size: 11px;
+    color: var(--ink-3);
+    opacity: 0.5;
+    font-family: var(--mono);
+    font-feature-settings: "tnum"; /* tabular numbers */
+    margin-right: auto;
+    letter-spacing: 0.01em;
+}
+
+.memos-container .tag-chip {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    background: var(--tag-bg);
+    color: var(--tag-ink);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: opacity 0.1s, transform 80ms ease-out;
+    white-space: nowrap;
+}
+
+.memos-container .tag-chip:hover {
+    opacity: 0.75;
+}
+
+/* ── #1: Response on tag click ── */
+.memos-container .tag-chip:active {
+    transform: scale(0.94);
+    transition: transform 80ms ease-out;
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+    .memos-container .note-card {
+        animation: none;
+        transition: none;
+    }
+    .memos-container .btn-save,
+    .memos-container .tag-chip {
+        transition: none;
+    }
+}

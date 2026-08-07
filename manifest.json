@@ -1,0 +1,10 @@
+{
+	"id": "obsidian-memos",
+	"name": "Memos",
+	"version": "1.0.0",
+	"minAppVersion": "1.4.0",
+	"description": "A quick capture and memo management plugin for Obsidian.",
+	"author": "Yniany",
+	"authorUrl": "",
+	"isDesktopOnly": false
+}

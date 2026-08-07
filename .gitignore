@@ -1,0 +1,9 @@
+node_modules/
+test-vault/
+archive_webapp/
+.DS_Store
+*.log
+config.json
+notes.json
+server.js
+start.bat
