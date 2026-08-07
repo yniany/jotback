@@ -10,7 +10,6 @@ A lightweight plugin for capturing and reviewing short memos inside Obsidian. Me
 
 - **Quick capture**: ribbon icon and command palette entry to open the Memos view
 - **Live search + tag filter**: filter memos by keyword or tag (Chinese tags supported)
-- **Year-month filter**: browse memos by month
 - **Timestamped filenames**: `YYYY-MM-DD-HHMMSS-mmm` format with LF normalization for cross-platform consistency
 
 ## Build
@@ -30,8 +29,9 @@ TypeScript · Obsidian API · esbuild
 
 ## Status
 
-- [x] Custom view (search / tag filter / year-month filter)
+- [x] Custom view (search / tag filter)
 - [x] Tag extraction (incl. Chinese)
+- [ ] Year-month filter (planned)
 - [ ] Random memo review (planned)
 - [ ] UI polish
 - [ ] Release packaging & community registry submission
