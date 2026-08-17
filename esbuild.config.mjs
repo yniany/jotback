@@ -44,7 +44,7 @@ const context = await esbuild.context({
         name: 'copy-to-test-vault',
         setup(build) {
             build.onEnd(() => {
-                const targetDir = path.join(process.cwd(), 'test-vault', '.obsidian', 'plugins', 'memos');
+                const targetDir = path.join(process.cwd(), 'test-vault', '.obsidian', 'plugins', 'jotback');
                 if (!fs.existsSync(targetDir)) {
                     fs.mkdirSync(targetDir, { recursive: true });
                 }

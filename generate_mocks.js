@@ -17,11 +17,11 @@ const generateRandomTime = (daysBack) => {
 };
 
 const mocks = [
-    "这是一个关于 #Obsidian 的测试笔记，展示如何进行快速记录。",
-    "今天的心情很不错，准备把项目重构一下！",
-    "刚学习了一些新知识：#TypeScript 中的泛型非常有用。\\n可以在函数声明时约束参数类型。",
-    "别忘了这周末去采购。#生活",
-    "随机记录的一个想法，也许以后能用上。"
+    "A test memo about quick capture in #Obsidian.",
+    "A good day to refactor the project.",
+    "A useful note: generics in #TypeScript constrain function parameters.",
+    "Remember the weekend shopping. #life",
+    "A passing thought that may become useful later."
 ];
 
 mocks.forEach((content, i) => {

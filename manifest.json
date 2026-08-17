@@ -1,10 +1,9 @@
 {
-	"id": "obsidian-memos",
-	"name": "Memos",
+	"id": "jotback",
+	"name": "Jotback",
 	"version": "1.0.0",
-	"minAppVersion": "1.4.0",
-	"description": "A quick capture and memo management plugin for Obsidian.",
-	"author": "Yniany",
-	"authorUrl": "",
+	"minAppVersion": "1.8.7",
+	"description": "Capture short thoughts and bring them back into view over time.",
+	"author": "yniany",
 	"isDesktopOnly": false
 }

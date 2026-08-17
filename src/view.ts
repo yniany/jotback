@@ -1,261 +1,319 @@
-import { ItemView, WorkspaceLeaf, TFile, MarkdownRenderer } from 'obsidian';
-import { extractTags, generateDateString, generateFilename, parseFrontmatter } from './utils';
+import { ItemView, MarkdownRenderer, Notice, setIcon, WorkspaceLeaf } from 'obsidian';
+import { MemoHeatmap } from './heatmap';
+import { t } from './i18n';
+import type JotbackPlugin from './main';
+import { RandomReviewDialog } from './random-review';
+import { MemoRepository } from './repository';
+import type { MemoData } from './types';
+import { buildTagsYaml, generateDateString, generateFilename, normalizeMemoFolder } from './utils';
 
-export const VIEW_TYPE_MEMOS = 'memos-view';
+export const VIEW_TYPE_JOTBACK = 'jotback-view';
+export const MEMOS_FOLDER = 'memos';
 
-interface MemoData {
-    file: TFile;
-    content: string;
-    createdAt: string;
-    tags: string[];
-    pinned: boolean;
-}
+const PAGE_SIZE = 50;
+const REFRESH_DEBOUNCE_MS = 100;
 
-export class MemosView extends ItemView {
+export class JotbackView extends ItemView {
     private listContainer!: HTMLElement;
     private countEl!: HTMLElement;
     private tagSelect!: HTMLSelectElement;
     private searchInput!: HTMLInputElement;
-    private allTags: Set<string> = new Set();
+    private heatmapEl!: HTMLElement;
+    private heatmap!: MemoHeatmap;
     private allMemos: MemoData[] = [];
+    private repository = new MemoRepository(this.app);
+    private randomReview = new RandomReviewDialog(this.app, this);
     private isRefreshing = false;
+    private pendingRefresh = false;
+    private heatmapVisible = false;
+    private searchDebounceTimer: number | null = null;
+    private refreshDebounceTimer: number | null = null;
+    private displayCount = PAGE_SIZE;
 
-    constructor(leaf: WorkspaceLeaf) {
+    constructor(leaf: WorkspaceLeaf, public plugin?: JotbackPlugin) {
         super(leaf);
     }
 
-    getViewType(): string {
-        return VIEW_TYPE_MEMOS;
+    get memoFolder(): string {
+        return normalizeMemoFolder(this.plugin?.settings.memoFolder || MEMOS_FOLDER);
     }
 
-    getDisplayText(): string {
-        return 'Memos';
-    }
+    getViewType(): string { return VIEW_TYPE_JOTBACK; }
+    getDisplayText(): string { return t('viewName'); }
+    getIcon(): string { return 'edit'; }
 
-    getIcon(): string {
-        return 'edit';
-    }
+    async refresh(): Promise<void> {
+        if (this.isRefreshing) {
+            this.pendingRefresh = true;
+            return;
+        }
 
-    async refresh() {
-        if (this.isRefreshing) return;
         this.isRefreshing = true;
+        this.pendingRefresh = false;
         try {
-            await this.loadData();
+            const collection = await this.repository.load(this.memoFolder);
+            this.allMemos = collection.memos;
+            this.updateTagOptions(collection.tags);
             this.renderList();
+            if (this.heatmapVisible) this.heatmap.render(this.allMemos);
         } finally {
             this.isRefreshing = false;
+            if (this.pendingRefresh) void this.refresh();
         }
     }
 
-    async onOpen() {
-        this.render();
+    async onOpen(): Promise<void> {
+        await this.render();
+        const isMemoFile = (path: string) => path.startsWith(`${this.memoFolder}/`);
+        const queueRefresh = (path: string) => {
+            this.repository.invalidate(path);
+            if (this.refreshDebounceTimer) this.contentEl.win.clearTimeout(this.refreshDebounceTimer);
+            this.refreshDebounceTimer = this.contentEl.win.setTimeout(
+                () => void this.refresh(),
+                REFRESH_DEBOUNCE_MS,
+            );
+        };
 
-        // Register vault event listeners for real-time updates
-        const isMemoFile = (path: string) => path.startsWith('memos/');
-
-        this.registerEvent(
-            this.app.vault.on('create', (file) => {
-                if (isMemoFile(file.path)) this.refresh();
-            })
-        );
-
-        this.registerEvent(
-            this.app.vault.on('modify', (file) => {
-                if (isMemoFile(file.path)) this.refresh();
-            })
-        );
-
-        this.registerEvent(
-            this.app.vault.on('delete', (file) => {
-                if (isMemoFile(file.path)) this.refresh();
-            })
-        );
-
-        this.registerEvent(
-            this.app.vault.on('rename', (file, oldPath) => {
-                if (isMemoFile(file.path) || isMemoFile(oldPath)) this.refresh();
-            })
-        );
+        this.registerEvent(this.app.vault.on('create', file => {
+            if (isMemoFile(file.path)) queueRefresh(file.path);
+        }));
+        this.registerEvent(this.app.vault.on('modify', file => {
+            if (isMemoFile(file.path)) queueRefresh(file.path);
+        }));
+        this.registerEvent(this.app.vault.on('delete', file => {
+            if (isMemoFile(file.path)) queueRefresh(file.path);
+        }));
+        this.registerEvent(this.app.vault.on('rename', (file, oldPath) => {
+            if (isMemoFile(file.path) || isMemoFile(oldPath)) {
+                this.repository.invalidate(oldPath);
+                queueRefresh(file.path);
+            }
+        }));
     }
 
-    async onClose() {
+    async onClose(): Promise<void> {
+        this.randomReview.close();
+        if (this.searchDebounceTimer) this.contentEl.win.clearTimeout(this.searchDebounceTimer);
+        if (this.refreshDebounceTimer) this.contentEl.win.clearTimeout(this.refreshDebounceTimer);
+        this.repository.clear();
         this.contentEl.empty();
     }
 
-    async render() {
+    private async render(): Promise<void> {
         const container = this.contentEl;
         container.empty();
-        container.addClass('memos-container');
+        container.addClass('jotback-container');
 
-        // ── Compose area ──
         const composeContainer = container.createDiv({ cls: 'compose' });
-        
-        const textarea = composeContainer.createEl('textarea', { 
-            attr: { placeholder: '记录一闪而过的灵感...' } 
+        const textarea = composeContainer.createEl('textarea', {
+            attr: {
+                placeholder: t('composePlaceholder'),
+                'aria-label': t('composePlaceholder'),
+            },
         });
-
         const footer = composeContainer.createDiv({ cls: 'compose-footer' });
-        
-        const saveBtn = footer.createEl('button', { cls: 'btn-save', text: '保存' });
-        
-        // #7: save button hidden until textarea has content
-        const saveMemo = async () => {
+        const saveBtn = footer.createEl('button', {
+            cls: 'btn-save',
+            text: t('save'),
+            attr: { type: 'button' },
+        });
+        textarea.addEventListener('input', () => {
+            composeContainer.toggleClass('has-content', textarea.value.trim().length > 0);
+        });
+        saveBtn.onclick = async () => {
             const content = textarea.value.trim();
             if (!content) return;
+            saveBtn.disabled = true;
+            saveBtn.setAttribute('aria-busy', 'true');
+            saveBtn.textContent = t('saving');
             try {
                 await this.createMemo(content);
                 textarea.value = '';
                 composeContainer.removeClass('has-content');
-                // vault.on('create') event listener will automatically trigger refresh()
-            } catch (err) {
-                console.error("Failed to save memo:", err);
+            } catch (error) {
+                console.error('Failed to save memo:', error);
+                const message = error instanceof Error ? error.message : String(error);
+                new Notice(t('saveFailed', { message }), 6000);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.removeAttribute('aria-busy');
+                saveBtn.textContent = t('save');
             }
         };
 
-        textarea.addEventListener('input', () => {
-            if (textarea.value.trim().length > 0) {
-                composeContainer.addClass('has-content');
-            } else {
-                composeContainer.removeClass('has-content');
-            }
+        const heatmapToggleRow = container.createDiv({ cls: 'hm-toggle-row' });
+        const heatmapToggleBtn = heatmapToggleRow.createEl('button', {
+            cls: 'hm-toggle-btn',
+            attr: { type: 'button', 'aria-expanded': 'false' },
         });
+        const chevron = heatmapToggleBtn.createSpan({ cls: 'hm-chevron' });
+        chevron.setAttribute('aria-hidden', 'true');
+        setIcon(chevron, 'chevron-down');
+        heatmapToggleBtn.createSpan({ text: t('heatmapTitle') });
+        this.heatmapEl = container.createDiv({ cls: 'hm-container' });
+        this.heatmapEl.hide();
+        this.heatmap = new MemoHeatmap(this.heatmapEl, () => {
+            this.displayCount = PAGE_SIZE;
+            this.renderList();
+        });
+        heatmapToggleBtn.onclick = () => {
+            this.heatmapVisible = !this.heatmapVisible;
+            heatmapToggleBtn.toggleClass('active', this.heatmapVisible);
+            heatmapToggleBtn.setAttribute('aria-expanded', String(this.heatmapVisible));
+            if (this.heatmapVisible) {
+                this.heatmapEl.show();
+                this.heatmap.render(this.allMemos);
+            } else {
+                this.heatmapEl.hide();
+            }
+        };
 
-        saveBtn.onclick = saveMemo;
-
-        // ── Filter bar ──
         const filterBar = container.createDiv({ cls: 'filter-bar' });
-        
         const searchWrap = filterBar.createDiv({ cls: 'search-wrap' });
-        // Use insertAdjacentHTML to avoid wiping children (#12)
-        searchWrap.insertAdjacentHTML('beforeend', `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>`);
-        
+        const searchIcon = searchWrap.createSpan({ cls: 'search-icon' });
+        searchIcon.setAttribute('aria-hidden', 'true');
+        setIcon(searchIcon, 'search');
         this.searchInput = searchWrap.createEl('input', {
             cls: 'search-input',
-            attr: { type: 'text', placeholder: '搜索内容...' }
+            attr: {
+                type: 'text',
+                placeholder: t('searchPlaceholder'),
+                'aria-label': t('searchPlaceholder'),
+            },
+        });
+        this.tagSelect = filterBar.createEl('select', {
+            cls: 'tag-select',
+            attr: { 'aria-label': t('tagFilter') },
+        });
+        this.tagSelect.createEl('option', { value: '', text: t('allTags') });
+        const randomBtn = filterBar.createEl('button', {
+            cls: 'random-btn',
+            attr: {
+                type: 'button',
+                title: t('randomReviewTitle'),
+                'aria-label': t('randomReviewTitle'),
+            },
+        });
+        setIcon(randomBtn, 'sparkles');
+        randomBtn.onclick = () => this.randomReview.open(this.allMemos);
+
+        this.searchInput.addEventListener('input', () => {
+            if (this.searchDebounceTimer) this.contentEl.win.clearTimeout(this.searchDebounceTimer);
+            this.searchDebounceTimer = this.contentEl.win.setTimeout(() => {
+                this.displayCount = PAGE_SIZE;
+                this.renderList();
+            }, 300);
+        });
+        this.tagSelect.addEventListener('change', () => {
+            this.displayCount = PAGE_SIZE;
+            this.renderList();
         });
 
-        this.tagSelect = filterBar.createEl('select', { cls: 'tag-select' });
-        this.tagSelect.createEl('option', { value: '', text: '所有标签' });
-
-        this.searchInput.addEventListener('input', () => this.renderList());
-        this.tagSelect.addEventListener('change', () => this.renderList());
-
-        // ── Note list ──
-        this.countEl = container.createDiv({ cls: 'note-count' });
+        this.countEl = container.createDiv({
+            cls: 'note-count',
+            attr: { 'aria-live': 'polite' },
+        });
         this.listContainer = container.createDiv({ cls: 'note-list' });
-        
         await this.refresh();
     }
 
-    async createMemo(content: string) {
-        const folderPath = 'memos';
-        const folder = this.app.vault.getAbstractFileByPath(folderPath);
-        if (!folder) {
+    private async createMemo(content: string): Promise<void> {
+        const folderPath = this.memoFolder;
+        if (!this.app.vault.getAbstractFileByPath(folderPath)) {
             try {
                 await this.app.vault.createFolder(folderPath);
-            } catch (e) {
-                console.warn("Folder already exists or error creating folder:", e);
+            } catch (error) {
+                if (!this.app.vault.getAbstractFileByPath(folderPath)) throw error;
             }
         }
 
-        const filename = generateFilename() + '.md';
-        const filepath = `${folderPath}/${filename}`;
-        
-        const createdAt = generateDateString();
-        // Fix #2: No extra blank line between frontmatter and content
-        const fileContent = `---\ncreated: ${createdAt}\npinned: false\n---\n${content}`;
-
-        await this.app.vault.create(filepath, fileContent);
+        const tagsYaml = buildTagsYaml([]);
+        await this.app.vault.create(
+            `${folderPath}/${generateFilename()}.md`,
+            `---\ncreated: ${generateDateString()}\npinned: false\n${tagsYaml}---\n${content}`,
+        );
     }
 
-    async loadData() {
-        const folderPath = 'memos';
-        const files = this.app.vault.getMarkdownFiles().filter(f => f.path.startsWith(folderPath + '/'));
-        
-        const newMemos: MemoData[] = [];
-        const newTags: Set<string> = new Set();
-
-        for (const file of files) {
-            const content = await this.app.vault.read(file);
-            
-            // Fix #1: Use centralized parser that normalizes line endings
-            const parsed = parseFrontmatter(content);
-            const body = parsed.body;
-            const pinned = parsed.pinned;
-            const createdAt = parsed.createdAt || generateDateString();
-            
-            const tags = extractTags(body);
-            tags.forEach(t => newTags.add(t));
-
-            newMemos.push({
-                file,
-                content: body,
-                createdAt,
-                tags,
-                pinned
-            });
-        }
-
-        // Sort: Pinned first, then by createdAt desc
-        newMemos.sort((a, b) => {
-            if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
-            return b.createdAt.localeCompare(a.createdAt);
-        });
-
-        this.allMemos = newMemos;
-        this.allTags = newTags;
-
-        // Update tag select options
-        const currentSelectedTag = this.tagSelect.value;
-        this.tagSelect.innerHTML = '<option value="">所有标签</option>';
-        Array.from(this.allTags).sort().forEach(tag => {
-            const option = this.tagSelect.createEl('option', { value: tag, text: `#${tag}` });
-            if (tag === currentSelectedTag) option.selected = true;
-        });
-    }
-
-    renderList() {
-        this.listContainer.empty();
-
-        const query = this.searchInput.value.toLowerCase();
+    private updateTagOptions(tags: string[]): void {
         const selectedTag = this.tagSelect.value;
+        this.tagSelect.empty();
+        this.tagSelect.createEl('option', { value: '', text: t('allTags') });
+        for (const tag of tags) {
+            const option = this.tagSelect.createEl('option', { value: tag, text: `#${tag}` });
+            if (tag === selectedTag) option.selected = true;
+        }
+    }
 
+    private renderList(): void {
+        this.listContainer.empty();
+        const query = this.searchInput.value.trim().toLocaleLowerCase();
+        const selectedTag = this.tagSelect.value;
+        const dateFilter = this.heatmap.dateFilter;
         const filtered = this.allMemos.filter(memo => {
+            if (dateFilter && !memo.createdAt.startsWith(dateFilter)) return false;
             if (selectedTag && !memo.tags.includes(selectedTag)) return false;
-            if (query && !memo.content.toLowerCase().includes(query)) return false;
-            return true;
+            return !query || memo.content.toLocaleLowerCase().includes(query);
         });
 
-        this.countEl.textContent = `共 ${filtered.length} 条笔记`;
+        this.countEl.textContent = dateFilter
+            ? t('datedMemoCount', { date: dateFilter, count: filtered.length })
+            : t('memoCount', { count: filtered.length });
 
-        for (const [index, memo] of filtered.entries()) {
-            const card = this.listContainer.createDiv({ cls: 'note-card' });
+        for (const memo of filtered.slice(0, this.displayCount)) {
+            const memoDate = memo.createdAt.substring(0, 10);
+            const card = this.listContainer.createDiv({
+                cls: 'note-card',
+                attr: {
+                    role: 'link',
+                    tabindex: '0',
+                    'aria-label': t('openMemo', { date: memoDate }),
+                },
+            });
             if (memo.pinned) card.addClass('pinned');
-
-            // #4: staggered entrance animation (capped at 200ms so late cards don't drag)
-            const delay = Math.min(index * 35, 200);
-            card.style.animationDelay = `${delay}ms`;
-
-            const contentDiv = card.createDiv({ cls: 'card-content' });
-            MarkdownRenderer.renderMarkdown(memo.content, contentDiv, memo.file.path, this);
-
-            const footer = card.createDiv({ cls: 'card-footer' });
-            footer.createDiv({ cls: 'card-date', text: memo.createdAt.substring(0, 10) });
-
-            memo.tags.forEach(tag => {
-                const tagEl = footer.createSpan({ cls: 'tag-chip', text: `#${tag}` });
-                tagEl.onclick = (e) => {
-                    e.stopPropagation();
+            const content = card.createDiv({ cls: 'card-content' });
+            void MarkdownRenderer.render(this.app, memo.content, content, memo.file.path, this);
+            const cardFooter = card.createDiv({ cls: 'card-footer' });
+            cardFooter.createDiv({ cls: 'card-date', text: memoDate });
+            const tagsContainer = cardFooter.createDiv({ cls: 'card-tags' });
+            for (const tag of memo.tags) {
+                const tagEl = tagsContainer.createEl('button', {
+                    cls: 'tag-chip',
+                    text: `#${tag}`,
+                    attr: {
+                        type: 'button',
+                        'aria-label': t('filterByTag', { tag }),
+                    },
+                });
+                tagEl.onclick = event => {
+                    event.stopPropagation();
                     this.tagSelect.value = tag;
                     this.renderList();
                 };
-            });
+            }
+            const openMemo = () => {
+                void this.app.workspace.getLeaf(false).openFile(memo.file);
+            };
+            card.onclick = event => {
+                if ((event.target as HTMLElement).closest('a, button, input, select, textarea')) return;
+                openMemo();
+            };
+            card.onkeydown = event => {
+                if (event.target !== card || (event.key !== 'Enter' && event.key !== ' ')) return;
+                event.preventDefault();
+                openMemo();
+            };
+        }
 
-            // Clicking the card opens it
-            card.onclick = (e) => {
-                if ((e.target as HTMLElement).tagName === 'A') return;
-                const leaf = this.app.workspace.getLeaf(false);
-                leaf.openFile(memo.file);
+        if (filtered.length > this.displayCount) {
+            const remaining = filtered.length - this.displayCount;
+            const loadMoreBtn = this.listContainer.createEl('button', {
+                cls: 'load-more-btn',
+                text: t('loadMore', { count: remaining }),
+                attr: { type: 'button' },
+            });
+            loadMoreBtn.onclick = () => {
+                this.displayCount += PAGE_SIZE;
+                this.renderList();
             };
         }
     }

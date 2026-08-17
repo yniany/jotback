@@ -1,7 +1,7 @@
-/* Memos Plugin Styles — Obsidian-native theming & Apple Design Polish */
+/* Jotback plugin styles */
 
-/* ── Design tokens (fully deferred to Obsidian variables) ── */
-.memos-container {
+/* Design tokens (deferred to Obsidian variables) */
+.jotback-container {
     --bg:        var(--background-secondary);
     --surface:   var(--background-primary);
     --border:    var(--background-modifier-border);
@@ -10,7 +10,6 @@
     --ink-2:     var(--text-muted);
     --ink-3:     var(--text-faint);
     --accent:    var(--interactive-accent);
-    --accent-dk: var(--interactive-accent-hover);
     --tag-bg:    var(--tag-background);
     --tag-ink:   var(--tag-color);
     --sans:      var(--font-interface);
@@ -22,8 +21,8 @@
     --shadow-md: var(--shadow-l);
 }
 
-/* ── App shell ── */
-.memos-container {
+/* App shell */
+.jotback-container {
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -34,8 +33,8 @@
     background-color: var(--bg);
 }
 
-/* ── Compose area ── */
-.memos-container .compose {
+/* Compose area */
+.jotback-container .compose {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--r-md);
@@ -46,12 +45,12 @@
     transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.memos-container .compose:focus-within {
+.jotback-container .compose:focus-within {
     box-shadow: var(--shadow-md);
     border-color: var(--border-md);
 }
 
-.memos-container .compose textarea {
+.jotback-container .compose textarea {
     width: 100%;
     border: none;
     outline: none;
@@ -68,20 +67,20 @@
     -webkit-tap-highlight-color: transparent;
 }
 
-.memos-container .compose textarea::placeholder {
+.jotback-container .compose textarea::placeholder {
     color: var(--ink-3);
 }
 
-.memos-container .compose textarea:focus,
-.memos-container .compose textarea:active,
-.memos-container .compose textarea:focus-visible {
+.jotback-container .compose textarea:focus,
+.jotback-container .compose textarea:active,
+.jotback-container .compose textarea:focus-visible {
     box-shadow: none;
     outline: none;
     border: none;
 }
 
-/* ── #7: Dynamic Compose footer (collapsible) ── */
-.memos-container .compose-footer {
+/* Collapsible compose footer */
+.jotback-container .compose-footer {
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -97,7 +96,7 @@
                 padding-top 0.2s ease;
 }
 
-.memos-container .compose.has-content .compose-footer {
+.jotback-container .compose.has-content .compose-footer {
     max-height: 50px;
     opacity: 1;
     margin-top: 10px;
@@ -105,7 +104,7 @@
     border-top: 1px solid var(--border);
 }
 
-.memos-container .btn-save {
+.jotback-container .btn-save {
     background: var(--accent);
     color: var(--text-on-accent, #fff);
     border: none;
@@ -117,18 +116,23 @@
     font-family: var(--sans);
     transition: opacity 0.12s;
 }
-.memos-container .btn-save:hover {
+.jotback-container .btn-save:hover {
     opacity: 0.85;
 }
 
-/* ── #1: Response (pointer-down feedback) ── */
-.memos-container .btn-save:active {
+.jotback-container .btn-save:disabled {
+    cursor: wait;
+    opacity: 0.65;
+}
+
+/* Pointer feedback */
+.jotback-container .btn-save:active {
     transform: scale(0.95);
     transition: transform 80ms ease-out;
 }
 
-/* ── Filter bar ── */
-.memos-container .filter-bar {
+/* Filter bar */
+.jotback-container .filter-bar {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -136,21 +140,30 @@
     flex-shrink: 0;
 }
 
-.memos-container .search-wrap {
+.jotback-container .search-wrap {
     flex: 1;
     position: relative;
     display: flex;
     align-items: center;
 }
 
-.memos-container .search-wrap svg {
+.jotback-container .search-icon {
     position: absolute;
     left: 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     color: var(--ink-3);
     pointer-events: none;
+    z-index: 1;
 }
 
-.memos-container .search-input {
+.jotback-container .search-icon svg {
+    width: 14px;
+    height: 14px;
+}
+
+.jotback-container .search-input {
     box-sizing: border-box;
     height: 30px;
     width: 100%;
@@ -164,14 +177,14 @@
     outline: none;
     transition: border-color 0.12s;
 }
-.memos-container .search-input:focus {
+.jotback-container .search-input:focus {
     border-color: var(--accent);
 }
-.memos-container .search-input::placeholder {
+.jotback-container .search-input::placeholder {
     color: var(--ink-3);
 }
 
-.memos-container .tag-select {
+.jotback-container .tag-select {
     box-sizing: border-box;
     height: 30px;
     padding: 0 8px;
@@ -186,23 +199,83 @@
     max-width: 110px;
 }
 
-/* ── Note count ── */
-.memos-container .note-count {
+.jotback-container .random-btn {
+    box-sizing: border-box;
+    height: 32px;
+    width: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    color: var(--ink-2);
+    cursor: pointer;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.12s, border-color 0.12s, background 0.12s, transform 0.08s;
+}
+.jotback-container .random-btn svg {
+    width: 22px !important;
+    height: 22px !important;
+    flex-shrink: 0;
+}
+.jotback-container .random-btn:hover {
+    color: var(--accent);
+    border-color: var(--border-md);
+    background: var(--background-modifier-hover);
+}
+.jotback-container .random-btn:active {
+    transform: scale(0.92);
+}
+
+.jotback-container .random-btn:focus-visible,
+.jotback-container .tag-chip:focus-visible,
+.jotback-container .note-card:focus-visible,
+.jotback-container .hm-toggle-btn:focus-visible,
+.jotback-container .hm-pill-btn:focus-visible,
+.jotback-container .hm-filter-badge:focus-visible,
+.jotback-container .hm-cell:focus-visible {
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: 2px;
+}
+
+/* Note count */
+.jotback-container .note-count {
     padding: 0 0 8px 0;
     font-size: 11px;
     letter-spacing: 0.02em;
     color: var(--ink-3);
 }
 
-/* ── Note list ── */
-.memos-container .note-list {
+/* Note list */
+.jotback-container .note-list {
     padding: 0;
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
 
-/* ── #4: Entrance Animation ── */
+.jotback-container .load-more-btn {
+    width: 100%;
+    padding: 10px;
+    margin-top: 4px;
+    border: 1px dashed var(--border);
+    border-radius: var(--r-md);
+    background: transparent;
+    color: var(--ink-3);
+    font-size: 12px;
+    font-family: var(--sans);
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.jotback-container .load-more-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 5%, transparent);
+}
+
+/* Entrance animation */
 @keyframes cardEntrance {
     from {
         opacity: 0;
@@ -214,8 +287,8 @@
     }
 }
 
-/* ── Note card ── */
-.memos-container .note-card {
+/* Note card */
+.jotback-container .note-card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--r-md);
@@ -229,39 +302,39 @@
     animation: cardEntrance 0.28s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
-.memos-container .note-card:hover {
+.jotback-container .note-card:hover {
     box-shadow: var(--shadow-md);
     border-color: var(--border-md);
 }
 
-/* ── #1: Response on card click / press ── */
-.memos-container .note-card:active {
+/* Card pointer feedback */
+.jotback-container .note-card:active {
     transform: scale(0.985);
     transition: transform 80ms ease-out;
 }
 
-.memos-container .note-card.pinned {
+.jotback-container .note-card.pinned {
     border-color: var(--accent);
     border-width: 1.5px;
 }
 
-/* ── Card content (Markdown) ── */
-.memos-container .card-content {
-    font-size: 14px;
-    line-height: 1.6;
+/* Card content (Markdown) */
+.jotback-container .card-content {
+    font-size: 15px;
+    line-height: 1.65;
     color: var(--ink);
     word-break: break-word;
     outline: none;
 }
 
-.memos-container .card-content p {
+.jotback-container .card-content p {
     margin-block-start: 0.4em;
     margin-block-end: 0.4em;
 }
-.memos-container .card-content p:first-child { margin-block-start: 0; }
-.memos-container .card-content p:last-child  { margin-block-end: 0; }
+.jotback-container .card-content p:first-child { margin-block-start: 0; }
+.jotback-container .card-content p:last-child  { margin-block-end: 0; }
 
-.memos-container .card-content h1 {
+.jotback-container .card-content h1 {
     font-size: 1.15em;
     font-weight: 600;
     margin-top: 0.4em;
@@ -269,14 +342,14 @@
     line-height: 1.35;
     letter-spacing: -0.01em;
 }
-.memos-container .card-content h2 {
+.jotback-container .card-content h2 {
     font-size: 1.08em;
     font-weight: 600;
     margin-top: 0.4em;
     margin-bottom: 0.2em;
     line-height: 1.35;
 }
-.memos-container .card-content h3 {
+.jotback-container .card-content h3 {
     font-size: 1.0em;
     font-weight: 600;
     margin-top: 0.3em;
@@ -285,7 +358,7 @@
 }
 
 /* Code block styling inside card content */
-.memos-container .card-content code {
+.jotback-container .card-content code {
     font-family: var(--mono);
     font-size: 0.88em;
     padding: 2px 5px;
@@ -294,7 +367,7 @@
     color: var(--code-normal, var(--ink));
 }
 
-.memos-container .card-content pre {
+.jotback-container .card-content pre {
     background-color: var(--code-background, var(--bg));
     padding: 8px 12px;
     border-radius: 6px;
@@ -302,13 +375,13 @@
     margin: 0.5em 0;
 }
 
-.memos-container .card-content pre code {
+.jotback-container .card-content pre code {
     padding: 0;
     background: transparent;
 }
 
-/* ── Card footer ── */
-.memos-container .card-footer {
+/* Card footer */
+.jotback-container .card-footer {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -316,17 +389,38 @@
     flex-wrap: wrap;
 }
 
-.memos-container .card-date {
+.jotback-container .card-date {
     font-size: 11px;
     color: var(--ink-3);
     opacity: 0.5;
     font-family: var(--mono);
-    font-feature-settings: "tnum"; /* tabular numbers */
+    font-feature-settings: "tnum";
     margin-right: auto;
     letter-spacing: 0.01em;
 }
 
-.memos-container .tag-chip {
+.jotback-container .card-tags {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-width: 0;
+}
+
+.jotback-container button.tag-chip {
+    appearance: none;
+    -webkit-appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: max-content;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 0;
+    height: auto;
+    margin: 0;
     font-size: 11px;
     font-weight: 500;
     padding: 2px 8px;
@@ -336,26 +430,460 @@
     cursor: pointer;
     transition: opacity 0.1s, transform 80ms ease-out;
     white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+    border: none;
+    box-shadow: none;
+    font-family: var(--sans);
+    line-height: 1.35;
 }
 
-.memos-container .tag-chip:hover {
+.jotback-container button.tag-chip:hover {
     opacity: 0.75;
+    border: none;
+    box-shadow: none;
 }
 
-/* ── #1: Response on tag click ── */
-.memos-container .tag-chip:active {
+.jotback-container button.tag-chip:active {
     transform: scale(0.94);
     transition: transform 80ms ease-out;
+    border: none;
+    box-shadow: none;
 }
 
-/* ── Reduced motion ── */
+
+/* Heatmap toggle row */
+.jotback-container .hm-toggle-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.jotback-container .hm-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    padding: 4px 10px;
+    border-radius: var(--r-sm);
+    font-size: 12px;
+    font-weight: 500;
+    font-family: var(--sans);
+    color: var(--ink-2);
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+.jotback-container .hm-toggle-btn.active {
+    color: var(--accent);
+}
+.jotback-container .hm-toggle-btn:active {
+    background: var(--background-modifier-hover);
+}
+
+.jotback-container .hm-chevron {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.jotback-container .hm-chevron svg {
+    width: 12px;
+    height: 12px;
+}
+.jotback-container .hm-toggle-btn.active .hm-chevron {
+    transform: rotate(180deg);
+}
+
+/* Heatmap container */
+.jotback-container .hm-container {
+    margin-bottom: 14px;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.jotback-container .hm-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+/* Year switcher */
+.jotback-container .hm-year-pill {
+    display: inline-flex;
+    align-items: center;
+    background: var(--background-modifier-form-field);
+    border: none;
+    border-radius: var(--r-sm);
+    padding: 2px 4px;
+    gap: 2px;
+}
+
+.jotback-container .hm-pill-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink);
+    font-family: var(--mono);
+    padding: 0 4px;
+    user-select: none;
+}
+
+.jotback-container .hm-pill-btn {
+    background: none;
+    border: none;
+    outline: none;
+    box-shadow: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    line-height: 1;
+    color: var(--ink-2);
+    cursor: pointer;
+    transition: color 0.12s, background 0.12s, transform 0.08s;
+}
+.jotback-container .hm-pill-btn:active {
+    transform: scale(0.92);
+    color: var(--ink);
+    background: var(--background-modifier-hover);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .jotback-container .hm-toggle-btn:hover,
+    .jotback-container .hm-pill-btn:hover {
+        color: var(--ink);
+        background: var(--background-modifier-hover);
+    }
+}
+
+/* Stat text inside Heatmap Header (Darkened color & larger font) */
+.jotback-container .hm-stat {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink-2);
+    margin-left: auto;
+    font-family: var(--sans);
+}
+
+.jotback-container .hm-filter-badge {
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 11px;
+    font-family: var(--mono);
+    cursor: pointer;
+    transition: background 0.12s;
+}
+.jotback-container .hm-filter-badge:hover {
+    background: color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+/* Standard seven-row, 52-week heatmap */
+.jotback-container .hm-7row-track {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 6px;
+    user-select: none;
+    box-sizing: border-box;
+    padding-bottom: 2px;
+}
+
+/* Shared scroll wrapper: both month header and grid scroll together */
+.jotback-container .hm-7row-scroll {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+.jotback-container .hm-7row-scroll::-webkit-scrollbar { display: none; }
+
+/* Month labels: column count set dynamically via JS inline style */
+.jotback-container .hm-7row-month-header {
+    display: grid;
+    /* grid-template-columns: set by JS (repeat(N, 11px)) */
+    gap: 2px;
+    height: 14px;
+}
+
+.jotback-container .hm-7row-month-label {
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--ink-3);
+    text-align: left;
+    font-family: var(--sans);
+    line-height: 1;
+    white-space: nowrap;
+    overflow: visible;
+}
+
+/* Cell grid: 7 fixed rows, column count set dynamically via JS inline style */
+.jotback-container .hm-7row-grid {
+    display: grid;
+    grid-template-rows: repeat(7, 11px);
+    /* grid-template-columns: set by JS (repeat(N, 11px)) */
+    grid-auto-flow: column;
+    gap: 2px;
+    box-sizing: border-box;
+}
+
+.jotback-container .hm-cell {
+    width: 11px;
+    height: 11px;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    border-radius: 1.5px;
+    background: color-mix(in srgb, var(--interactive-accent) 6%, var(--background-primary));
+    border: 0.5px solid color-mix(in srgb, var(--interactive-accent) 12%, transparent);
+    cursor: pointer;
+    transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.jotback-container .hm-cell.empty-offset {
+    background: transparent !important;
+    border: none !important;
+    pointer-events: none;
+    opacity: 0;
+}
+
+.jotback-container .hm-cell:hover:not(.empty-offset) {
+    transform: scale(1.35);
+    z-index: 2;
+    border-color: var(--interactive-accent);
+    box-shadow: 0 0 6px var(--interactive-accent);
+}
+
+.jotback-container .hm-cell.l-1 { background: color-mix(in srgb, var(--interactive-accent) 25%, var(--background-primary)); }
+.jotback-container .hm-cell.l-2 { background: color-mix(in srgb, var(--interactive-accent) 50%, var(--background-primary)); }
+.jotback-container .hm-cell.l-3 { background: color-mix(in srgb, var(--interactive-accent) 75%, var(--background-primary)); }
+.jotback-container .hm-cell.l-4 { background: var(--interactive-accent); }
+
+.jotback-container .hm-cell.selected {
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: 1px;
+}
+
+
+/* Random review dialog */
+@keyframes backdropFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes modalPopIn {
+    from {
+        opacity: 0;
+        transform: scale(0.94) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.memo-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: backdropFadeIn 0.15s ease-out;
+}
+
+.memo-modal-card {
+    width: 100%;
+    max-width: 480px;
+    max-height: 80vh;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 12px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: modalPopIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.memo-modal-card:focus {
+    outline: none;
+}
+
+.memo-modal-card:focus-visible {
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: 3px;
+}
+
+.memo-modal-card .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    background: var(--background-secondary);
+}
+
+.memo-modal-card .modal-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-normal);
+    font-family: var(--font-interface);
+}
+
+
+
+.memo-modal-card .modal-body {
+    padding: 18px;
+    overflow-y: auto;
+    flex: 1;
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--text-normal);
+}
+
+.memo-modal-card .modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-top: 1px solid var(--background-modifier-border);
+    background: var(--background-secondary);
+    gap: 8px;
+}
+
+.memo-modal-card .modal-footer-left,
+.memo-modal-card .modal-footer-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.memo-modal-card .modal-shortcuts {
+    color: var(--text-faint);
+    font-family: var(--font-interface);
+    font-size: 11px;
+    line-height: 1.35;
+}
+
+body .memo-modal-card .modal-next-btn,
+body .memo-modal-card .modal-next-btn:hover,
+body .memo-modal-card .modal-next-btn:focus,
+body .memo-modal-card .modal-next-btn:focus-visible,
+body .memo-modal-card .modal-next-btn:active {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent, #ffffff);
+    border: none;
+    outline: none;
+    box-shadow: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: var(--font-interface);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    user-select: none;
+    transition: opacity 0.12s, transform 0.08s;
+}
+body .memo-modal-card .modal-next-btn:hover {
+    opacity: 0.9;
+}
+body .memo-modal-card .modal-next-btn:active {
+    transform: scale(0.95);
+    opacity: 0.82;
+}
+
+body .memo-modal-card .modal-action-btn {
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: var(--font-interface);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    user-select: none;
+    transition: background 0.12s, color 0.12s, transform 0.08s;
+}
+body .memo-modal-card .modal-action-btn:active {
+    transform: scale(0.95);
+}
+body .memo-modal-card .modal-action-btn.primary-outline {
+    border: 1px solid color-mix(in srgb, var(--interactive-accent) 50%, transparent);
+    color: var(--interactive-accent);
+    background: color-mix(in srgb, var(--interactive-accent) 10%, transparent);
+}
+body .memo-modal-card .modal-action-btn.primary-outline:hover,
+body .memo-modal-card .modal-action-btn.primary-outline:focus,
+body .memo-modal-card .modal-action-btn.primary-outline:active {
+    background: color-mix(in srgb, var(--interactive-accent) 20%, transparent);
+    color: var(--interactive-accent);
+}
+
+/* Mobile and touch layout */
+@media (max-width: 600px) {
+    .jotback-container button.tag-chip {
+        width: max-content;
+        min-width: 0;
+        min-height: 0;
+        height: auto;
+        padding: 2px 7px;
+    }
+
+    .memo-modal-backdrop {
+        padding: 16px;
+        align-items: center;
+        justify-content: center;
+    }
+    .memo-modal-card {
+        max-width: 90vw;
+        width: 100%;
+        border-radius: 14px;
+        max-height: 80vh;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+    }
+    .memo-modal-card .modal-footer {
+        padding: 10px 14px;
+    }
+    .memo-modal-card .modal-shortcuts {
+        display: none;
+    }
+}
+
+/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-    .memos-container .note-card {
+    .jotback-container .note-card,
+    .jotback-container .hm-container,
+    .jotback-container .hm-chevron,
+    .memo-modal-backdrop,
+    .memo-modal-card {
         animation: none;
         transition: none;
     }
-    .memos-container .btn-save,
-    .memos-container .tag-chip {
+    .jotback-container .btn-save,
+    .jotback-container .tag-chip,
+    .jotback-container .hm-cell {
         transition: none;
     }
 }

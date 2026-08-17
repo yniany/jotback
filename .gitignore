@@ -1,5 +1,14 @@
+# Dependencies and generated artifacts
 node_modules/
+main.js
 test-vault/
+coverage/
+
+# Local product and naming exploration
+.naming-output.md
+explorations/
+
+# Local development files
 archive_webapp/
 .DS_Store
 *.log
