@@ -21,6 +21,21 @@ Each memo is stored as an individual timestamped Markdown file. Your notes remai
 - **Responsive interface** — supports desktop and mobile layouts, Obsidian themes, keyboard navigation, and reduced-motion preferences.
 - **System-language interface** — follows Obsidian's configured language for English and Chinese, with English as the fallback.
 
+## Screenshots
+
+### Desktop
+
+| Main view | Random review |
+| --- | --- |
+| ![Jotback desktop main view](assets/screenshots/desktop-main.png) | ![Jotback desktop random review](assets/screenshots/desktop-random-review.png) |
+
+### Mobile
+
+<p align="center">
+  <img src="assets/screenshots/mobile-main.png" alt="Jotback mobile main view" width="320">
+  <img src="assets/screenshots/mobile-random-review.png" alt="Jotback mobile random review" width="320">
+</p>
+
 ## Memo format
 
 New memos use timestamped filenames in the following format:
