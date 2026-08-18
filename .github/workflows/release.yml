@@ -1,0 +1,83 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  release:
+    name: Build and publish release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify release version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          node <<'NODE'
+          const manifest = require('./manifest.json');
+          const packageJson = require('./package.json');
+          const versions = require('./versions.json');
+          const tag = process.env.RELEASE_TAG;
+
+          if (!/^\d+\.\d+\.\d+$/.test(tag)) {
+            throw new Error(`Release tag must be a version without a v prefix: ${tag}`);
+          }
+          if (manifest.version !== tag) {
+            throw new Error(`manifest.json version ${manifest.version} does not match tag ${tag}`);
+          }
+          if (packageJson.version !== tag) {
+            throw new Error(`package.json version ${packageJson.version} does not match tag ${tag}`);
+          }
+          if (versions[tag] !== manifest.minAppVersion) {
+            throw new Error(`versions.json must map ${tag} to ${manifest.minAppVersion}`);
+          }
+          NODE
+
+      - name: Run tests
+        run: npm test
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Build plugin
+        run: npm run build
+
+      - name: Verify release assets
+        run: test -s main.js && test -s manifest.json && test -s styles.css
+
+      - name: Generate artifact attestations
+        uses: actions/attest@v4
+        with:
+          subject-path: |
+            main.js
+            styles.css
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "${GITHUB_REF_NAME}"
+          main.js manifest.json styles.css
+          --verify-tag
+          --title "Jotback ${GITHUB_REF_NAME}"
+          --generate-notes
