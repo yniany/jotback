@@ -1,6 +1,7 @@
 import { App, Plugin, PluginSettingTab, Setting, WorkspaceLeaf } from 'obsidian';
 import type { SettingDefinitionItem } from 'obsidian';
 import { t } from './i18n';
+import { listMarkdownFilesInFolder } from './repository';
 import { normalizeMemoFolder } from './utils';
 import { JotbackView, VIEW_TYPE_JOTBACK } from './view';
 
@@ -81,7 +82,7 @@ export default class JotbackPlugin extends Plugin {
     
     async openRandomMemo(): Promise<void> {
         const folder = normalizeMemoFolder(this.settings.memoFolder);
-        const files = this.app.vault.getMarkdownFiles().filter(f => f.path.startsWith(folder + '/'));
+        const files = listMarkdownFilesInFolder(this.app.vault, folder);
         if (files.length === 0) return;
         
         const randomFile = files[Math.floor(Math.random() * files.length)];

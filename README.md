@@ -177,17 +177,6 @@ styles.css        Plugin interface styles
 main.js           Generated plugin bundle
 ```
 
-## Status
-
-- [x] Quick capture and Markdown storage
-- [x] Search and YAML tag filtering
-- [x] Configurable memo folder
-- [x] Paginated memo timeline
-- [x] Daily activity heatmap
-- [x] Random memo review and keyboard controls
-- [x] Parsing, tag, date, and repository regression tests
-- [ ] Release packaging and community plugin registry submission
-
 ## Tech stack
 
 TypeScript · Obsidian API · esbuild · Node.js test runner

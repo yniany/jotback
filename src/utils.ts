@@ -87,11 +87,13 @@ export function mergeTags(...tagGroups: string[][]): string[] {
     const merged: string[] = [];
     const seen = new Set<string>();
 
-    for (const tag of tagGroups.flat()) {
-        const key = tag.toLocaleLowerCase();
-        if (seen.has(key)) continue;
-        seen.add(key);
-        merged.push(tag);
+    for (const tagGroup of tagGroups) {
+        for (const tag of tagGroup) {
+            const key = tag.toLocaleLowerCase();
+            if (seen.has(key)) continue;
+            seen.add(key);
+            merged.push(tag);
+        }
     }
 
     return merged;

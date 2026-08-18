@@ -1,4 +1,4 @@
-import type { App, TFile } from 'obsidian';
+import type { App, TAbstractFile, TFile, TFolder, Vault } from 'obsidian';
 import type { MemoCollection, MemoData } from './types';
 import { mergeTags, parseFrontmatter, resolveCreatedAt } from './utils';
 
@@ -9,6 +9,31 @@ interface CacheEntry {
 }
 
 const READ_BATCH_SIZE = 16;
+
+function isFolder(entry: TAbstractFile): entry is TFolder {
+    return 'children' in entry && Array.isArray(entry.children);
+}
+
+function isMarkdownFile(entry: TAbstractFile): entry is TFile {
+    return 'extension' in entry
+        && typeof entry.extension === 'string'
+        && entry.extension.toLocaleLowerCase() === 'md';
+}
+
+export function listMarkdownFilesInFolder(vault: Vault, folderPath: string): TFile[] {
+    const root = vault.getFolderByPath(folderPath);
+    if (!root) return [];
+
+    const files: TFile[] = [];
+    const visit = (folder: TFolder): void => {
+        for (const child of folder.children) {
+            if (isFolder(child)) visit(child);
+            else if (isMarkdownFile(child)) files.push(child);
+        }
+    };
+    visit(root);
+    return files;
+}
 
 export class MemoRepository {
     private cache = new Map<string, CacheEntry>();
@@ -24,8 +49,7 @@ export class MemoRepository {
     }
 
     async load(folder: string): Promise<MemoCollection> {
-        const prefix = `${folder}/`;
-        const files = this.app.vault.getMarkdownFiles().filter(file => file.path.startsWith(prefix));
+        const files = listMarkdownFilesInFolder(this.app.vault, folder);
         const livePaths = new Set(files.map(file => file.path));
 
         for (const path of this.cache.keys()) {
